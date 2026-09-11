@@ -229,6 +229,11 @@ a {
   color: #64748b;
 }
 
+.upload-area.is-dragging {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
 .upload-area p {
   font-size: 17px;
   font-weight: 600;
@@ -277,6 +282,52 @@ a {
 .primary-button {
   margin-top: 24px;
   width: 100%;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.result-card {
+  margin-top: 24px;
+  padding: 28px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+}
+
+.result-card h2 {
+  margin-bottom: 12px;
+}
+
+.result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.result-meta span {
+  padding: 6px 10px;
+  background: #f1f5f9;
+  border-radius: 999px;
+}
+
+.result-content {
+  padding: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.result-content p + p {
+  margin-top: 8px;
 }
 
 @media (max-width: 900px) {

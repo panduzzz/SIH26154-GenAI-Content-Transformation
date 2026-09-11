@@ -12,7 +12,7 @@ The MVP demonstrates a single, complete user journey:
 Upload content -> extract text -> select transformation -> generate output -> review result
 ```
 
-The current prototype already demonstrates PDF extraction, image OCR, audio/video transcription, a React interface, and five transformation options. The next MVP work is to make this flow reliable, clearly presented, and ready for extension into a full GenAI platform.
+The current MVP demonstrates PDF extraction, image OCR, audio/video transcription, a React interface, and five deterministic transformation options. Phase 1 reliability work and most of the presentation-facing transformation experience are now implemented. The remaining work is primarily end-to-end fixtures/tests, explicit prototype labeling, human review controls, and the optional real GenAI layer.
 
 The MVP is intentionally narrower than the final product. It proves the core value: converting different types of content into useful readable outputs from one interface.
 
@@ -28,22 +28,30 @@ Build a demonstrable web application that allows a user to:
 
 ## Current MVP Status
 
+Status meanings: **Implemented** is present in the current code, **Partial** is usable but incomplete for the planned behavior, and **Not implemented** has no working code path yet.
+
 | Capability | Status | Evidence |
 | --- | --- | --- |
-| React dashboard | Implemented | `frontend/src/pages/Dashboard.jsx` |
+| React dashboard | Partial | `frontend/src/pages/Dashboard.jsx`; the main document card is present, but its action button does not yet navigate to `/transform` |
 | Upload and transformation page | Implemented | `frontend/src/pages/Transform.jsx` |
 | PDF extraction | Implemented | `backend/services/pdf_extractor.py` |
 | Image OCR | Implemented | Tesseract integration in `backend/main.py` |
-| Audio/video transcription | Implemented | Whisper integration in `backend/main.py` |
+| Audio/video transcription | Implemented | Lazy-loaded Whisper integration in `backend/main.py` |
 | Summary transformation | Implemented as prototype | `backend/services/transformer.py` |
 | Simplification transformation | Implemented as prototype | `backend/services/transformer.py` |
 | Q&A generation | Implemented as prototype | `backend/services/transformer.py` |
 | Structured output | Implemented as text prototype | `backend/services/transformer.py` |
-| Translation | Preview only | No actual language translation yet |
+| Translation | Implemented as preview | `backend/services/transformer.py`; no actual language translation yet |
+| Upload reliability controls | Implemented | Supported extension checks, 25 MB limit, extraction errors, empty extraction errors, and retry behavior |
+| Drag-and-drop upload | Implemented | Drop handlers and drag state in `frontend/src/pages/Transform.jsx` |
+| Configurable backend URL | Implemented | `VITE_API_BASE_URL` with local default in `frontend/src/pages/Transform.jsx` |
+| Result metadata | Implemented | Filename, transformation, extracted character count, status, confidence placeholder, and review status |
+| Basic human inspection | Implemented | Transformed result is displayed for user inspection; no approval state is persisted |
 | Real LLM integration | Not implemented | Current logic is deterministic Python processing |
-| Human review workflow | Not implemented | Result is displayed but not reviewed or approved |
+| Human review workflow | Partial | Result can be inspected, but Approve, Edit, Regenerate, and reviewed-state actions are not implemented |
 | History/database | Not implemented | `database/` is currently empty |
 | Automated tests | Not implemented | `tests/` is currently empty |
+| Sample/demo fixtures | Not implemented | `sample-data/` does not yet contain a verified presentation set |
 
 ## MVP Scope
 
@@ -59,6 +67,7 @@ Build a demonstrable web application that allows a user to:
   - Convert content into a structured text report.
   - Prepare a translation preview.
 - Result display with loading and error states.
+- Drag-and-drop selection, client-side validation, and retry after a failed request.
 - Basic health endpoint for backend availability.
 - A simple human review step represented by the user inspecting the generated result before use.
 
@@ -133,30 +142,36 @@ The frontend displays the transformed result. For the MVP presentation, this is 
 
 ### Phase 1: Make the existing demo reliable
 
+**Status: Mostly implemented.**
+
 1. Add a backend dependency file such as `requirements.txt` or `pyproject.toml`.
 2. Document required system tools: Tesseract OCR and FFmpeg/Whisper runtime dependencies.
 3. Add a `.env.example` file for configurable paths and API settings.
 4. Replace the hard-coded frontend backend URL with an environment variable.
 5. Add clear backend error responses for invalid files, extraction failures, and unsupported formats.
 6. Add file size and supported-extension validation.
-7. Test one representative PDF, image, and audio file end to end.
+7. Test one representative PDF, image, and audio file end to end. **Remaining.**
 
 **Deliverable:** the current vertical slice can be started and demonstrated consistently.
 
 ### Phase 2: Improve the MVP transformation experience
 
+**Status: Partially implemented.**
+
 1. Keep the current deterministic transformations for the first demo if an LLM API is not available.
-2. Label the output accurately as prototype-generated or rule-based where appropriate.
-3. Improve the result panel so headings, bullet points, and Q&A output are readable.
-4. Show the filename, transformation type, extracted character count, and processing status.
-5. Add a clear empty-result message when extraction finds no text.
-6. Add a retry action after a failed request.
-7. Make the dashboard transformation button navigate to `/transform`.
-8. Clearly mark Content Generation, History, and Settings as planned features until they are implemented.
+2. Label the output accurately as prototype-generated or rule-based where appropriate. **Remaining.**
+3. Improve the result panel so headings, bullet points, and Q&A output are readable. **Implemented at a basic text-rendering level; richer formatting remains.**
+4. Show the filename, transformation type, extracted character count, and processing status. **Implemented.**
+5. Add a clear empty-result message when extraction finds no text. **Implemented as a backend error.**
+6. Add a retry action after a failed request. **Implemented.**
+7. Make the dashboard transformation button navigate to `/transform`. **Remaining.**
+8. Clearly mark Content Generation, History, and Settings as planned features until they are implemented. **Remaining.**
 
 **Deliverable:** the interface communicates the MVP workflow clearly during a live presentation.
 
 ### Phase 3: Add a real GenAI transformation layer
+
+**Status: Not started.**
 
 1. Create a provider interface for an LLM instead of calling a model directly from the API route.
 2. Add configuration for the selected LLM provider and API key through environment variables.
@@ -171,7 +186,9 @@ The frontend displays the transformed result. For the MVP presentation, this is 
 
 ### Phase 4: Add a lightweight verification experience
 
-1. Display extracted text and transformed text in separate sections.
+**Status: Inspection is implemented; workflow actions remain.**
+
+1. Display extracted text and transformed text in separate sections. **Remaining; the current result view primarily displays transformed text.**
 2. Add a simple confidence label based on extraction success and output validation.
 3. Add Approve, Regenerate, and Edit actions in the result view.
 4. Mark approved output as reviewed in the frontend state.
@@ -180,6 +197,8 @@ The frontend displays the transformed result. For the MVP presentation, this is 
 **Deliverable:** the presentation can demonstrate that generated output is reviewed before being treated as final.
 
 ### Phase 5: Add MVP tests and presentation fixtures
+
+**Status: Not started.**
 
 1. Add unit tests for PDF extraction and every transformation mode.
 2. Add API tests for health checks, supported uploads, unsupported files, and empty extraction.
@@ -247,12 +266,13 @@ transformation=summarize
 
 - The current transformation service is not yet a real LLM integration.
 - Translation currently returns a preview and does not translate between languages.
-- DOC, DOCX, TXT, JSON, and CSV are listed by the frontend but are not fully parsed by the backend.
+- DOC, DOCX, TXT, JSON, and CSV are outside the current supported upload set and are not parsed by the backend.
 - Results are not persisted after the request.
 - There is no authentication, authorization, database, audit trail, or production retention policy.
-- Whisper loads during backend startup and may require model downloads and additional system dependencies.
-- Uploads are currently held in memory and do not have production-grade size or security controls.
-- The drag-and-drop wording exists in the UI, but actual drag-and-drop handlers are not implemented yet.
+- Whisper is loaded lazily on the first audio/video request, but may still require model downloads and additional system dependencies.
+- Uploads are held in memory and have a 25 MB limit, but do not yet have production-grade streaming, malware scanning, or retention controls.
+- The dashboard's main transformation button and planned History/Settings links are still placeholders.
+- End-to-end testing with representative PDF, image, and audio fixtures has not yet been completed.
 
 ## MVP Success Criteria
 

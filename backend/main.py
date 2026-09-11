@@ -1,10 +1,9 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import whisper
+from functools import lru_cache
 import tempfile
 import os
 import pytesseract
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 from PIL import Image
 import io
 
@@ -18,6 +17,29 @@ app = FastAPI(
     version="1.0.0",
 )
 
+MAX_UPLOAD_SIZE = int(os.getenv("MAX_UPLOAD_SIZE_BYTES", str(25 * 1024 * 1024)))
+TESSERACT_CMD = os.getenv("TESSERACT_CMD")
+if TESSERACT_CMD:
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
+
+SUPPORTED_EXTENSIONS = {
+    ".pdf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".bmp",
+    ".tiff",
+    ".webp",
+    ".mp3",
+    ".wav",
+    ".m4a",
+    ".mp4",
+    ".mpeg",
+    ".mpga",
+    ".webm",
+}
+SUPPORTED_TRANSFORMATIONS = {"summarize", "simplify", "qa", "structured", "translate"}
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,8 +50,12 @@ app.add_middleware(
 )
 
 
-# Load Whisper model
-whisper_model = whisper.load_model("base")
+# Load Whisper only when an audio or video file is submitted.
+@lru_cache(maxsize=1)
+def get_whisper_model():
+    import whisper
+
+    return whisper.load_model(os.getenv("WHISPER_MODEL", "base"))
 
 
 @app.get("/")
@@ -57,102 +83,71 @@ async def transform_content(
 
     filename = file.filename or ""
     lower_filename = filename.lower()
+    extension = os.path.splitext(lower_filename)[1]
+
+    if not filename:
+        raise HTTPException(status_code=400, detail="A filename is required.")
+
+    if extension not in SUPPORTED_EXTENSIONS:
+        supported = ", ".join(sorted(SUPPORTED_EXTENSIONS))
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type. Supported extensions: {supported}",
+        )
+
+    if len(file_bytes) > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File is too large. Maximum size is {MAX_UPLOAD_SIZE // (1024 * 1024)} MB.",
+        )
+
+    transformation = transformation.lower().strip()
+    if transformation not in SUPPORTED_TRANSFORMATIONS:
+        raise HTTPException(status_code=400, detail="Unsupported transformation type.")
 
     # ---------------- PDF ----------------
-    if lower_filename.endswith(".pdf"):
-        extracted_text = extract_text_from_pdf(file_bytes)
+    try:
+        if extension == ".pdf":
+            extracted_text = extract_text_from_pdf(file_bytes)
 
-        transformed_text = transform_text(
-            extracted_text,
-            transformation,
-        )
+        # ---------------- IMAGE ----------------
+        elif extension in {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".webp"}:
+            image = Image.open(io.BytesIO(file_bytes))
+            extracted_text = pytesseract.image_to_string(image).strip()
 
-        return {
-            "message": "PDF processed successfully",
-            "filename": filename,
-            "transformation": transformation,
-            "text_length": len(extracted_text),
-            "extracted_text": extracted_text,
-            "transformed_text": transformed_text,
-        }
+        # ---------------- AUDIO ----------------
+        else:
+            temp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix=extension,
+                ) as temp_file:
+                    temp_file.write(file_bytes)
+                    temp_path = temp_file.name
 
-       # ---------------- IMAGE ----------------
-    image_extensions = (
-        ".png",
-        ".jpg",
-        ".jpeg",
-        ".bmp",
-        ".tiff",
-        ".webp",
-    )
+                result = get_whisper_model().transcribe(temp_path)
+                extracted_text = result["text"].strip()
+            finally:
+                if temp_path and os.path.exists(temp_path):
+                    os.remove(temp_path)
+    except Exception as error:
+        raise HTTPException(status_code=422, detail=f"Unable to extract content: {error}") from error
 
-    if lower_filename.endswith(image_extensions):
-        image = Image.open(io.BytesIO(file_bytes))
+    if not extracted_text:
+        raise HTTPException(status_code=422, detail="No readable text was extracted from the file.")
 
-        extracted_text = pytesseract.image_to_string(image).strip()
+    transformed_text = transform_text(extracted_text, transformation)
 
-        transformed_text = transform_text(
-            extracted_text,
-            transformation,
-        )
-
-        return {
-            "message": "Image processed successfully",
-            "filename": filename,
-            "transformation": transformation,
-            "text_length": len(extracted_text),
-            "extracted_text": extracted_text,
-            "transformed_text": transformed_text,
-        }
-    # ---------------- AUDIO ----------------
-    audio_extensions = (
-        ".mp3",
-        ".wav",
-        ".m4a",
-        ".mp4",
-        ".mpeg",
-        ".mpga",
-        ".webm",
-    )
-
-    if lower_filename.endswith(audio_extensions):
-        temp_path = None
-
-        try:
-            with tempfile.NamedTemporaryFile(
-                delete=False,
-                suffix=os.path.splitext(filename)[1],
-            ) as temp_file:
-                temp_file.write(file_bytes)
-                temp_path = temp_file.name
-
-            result = whisper_model.transcribe(temp_path)
-            extracted_text = result["text"].strip()
-
-            transformed_text = transform_text(
-                extracted_text,
-                transformation,
-            )
-
-            return {
-                "message": "Audio transcribed successfully",
-                "filename": filename,
-                "transformation": transformation,
-                "text_length": len(extracted_text),
-                "extracted_text": extracted_text,
-                "transformed_text": transformed_text,
-            }
-
-        finally:
-            if temp_path and os.path.exists(temp_path):
-                os.remove(temp_path)
-
-    # ---------------- OTHER FILES ----------------
     return {
-        "message": "File received successfully",
+        "message": "Content processed successfully",
         "filename": filename,
+        "input_type": extension.removeprefix("."),
         "transformation": transformation,
-        "text_length": 0,
-        "extracted_text": "",
-        "transformed_text": "",
+        "status": "completed",
+        "text_length": len(extracted_text),
+        "extracted_text": extracted_text,
+        "transformed_text": transformed_text,
+        "confidence": None,
+        "review_status": "not_reviewed",
     }
