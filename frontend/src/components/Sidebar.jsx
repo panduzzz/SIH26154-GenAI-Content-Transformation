@@ -3,6 +3,7 @@ import {
   WandSparkles,
   History,
   Settings,
+  CircleHelp,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 
@@ -11,8 +12,10 @@ function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-logo">
         <WandSparkles size={24} />
-        <span>GenAI Transform</span>
+        <span>GenAI<br /><b>Transform</b></span>
       </div>
+
+      <div className="sidebar-caption">A quieter way to<br />work with information.</div>
 
       <nav className="sidebar-nav">
         <NavLink
@@ -35,16 +38,31 @@ function Sidebar() {
           <span>Transform</span>
         </NavLink>
 
-        <a href="#" className="nav-item">
+        <NavLink
+          to="/history"
+          className={({ isActive }) =>
+            `nav-item ${isActive ? 'active' : ''}`
+          }
+        >
           <History size={20} />
           <span>History</span>
-        </a>
+        </NavLink>
 
-        <a href="#" className="nav-item">
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `nav-item ${isActive ? 'active' : ''}`
+          }
+        >
           <Settings size={20} />
           <span>Settings</span>
-        </a>
+        </NavLink>
       </nav>
+
+      <div className="sidebar-bottom">
+        <div className="sidebar-note"><CircleHelp size={16} /><span>Need a hand?</span></div>
+        <div className="sidebar-version">SIH26154 / 2026</div>
+      </div>
     </aside>
   )
 }
