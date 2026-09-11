@@ -1,0 +1,307 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #1f2937;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* =========================
+   APP LAYOUT
+========================= */
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+  width: 250px;
+  min-height: 100vh;
+  background: #111827;
+  color: white;
+  padding: 24px 16px;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 30px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  color: #cbd5e1;
+  transition: 0.2s;
+}
+
+.nav-item:hover {
+  background: #1f2937;
+  color: white;
+}
+
+.nav-item.active {
+  background: #2563eb;
+  color: white;
+}
+
+/* =========================
+   MAIN CONTENT
+========================= */
+
+.main-content {
+  margin-left: 250px;
+  width: calc(100% - 250px);
+  padding: 50px;
+}
+
+/* =========================
+   DASHBOARD HEADER
+========================= */
+
+.dashboard-header {
+  margin-bottom: 40px;
+}
+
+.eyebrow {
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.dashboard-header h1 {
+  font-size: 36px;
+  max-width: 800px;
+  line-height: 1.2;
+  margin-bottom: 15px;
+}
+
+.subtitle {
+  color: #64748b;
+  font-size: 17px;
+  max-width: 700px;
+  line-height: 1.6;
+}
+
+/* =========================
+   TRANSFORMATION CARDS
+========================= */
+
+.transformation-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.option-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  transition: 0.2s;
+}
+
+.option-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+.option-card h2 {
+  font-size: 20px;
+  margin-bottom: 12px;
+}
+
+.option-card p {
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.option-card button {
+  border: none;
+  background: #2563eb;
+  color: white;
+  padding: 11px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.option-card button:hover {
+  background: #1d4ed8;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 900px) {
+  .transformation-options {
+    grid-template-columns: 1fr;
+  }
+
+  .main-content {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 700px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  .main-content {
+    margin-left: 200px;
+    width: calc(100% - 200px);
+  }
+
+  .dashboard-header h1 {
+    font-size: 28px;
+  }
+}
+/* =========================
+   TRANSFORM PAGE
+========================= */
+
+.transform-container {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+}
+
+.upload-card,
+.transform-options-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+}
+
+.upload-card h2,
+.transform-options-card h2 {
+  margin-bottom: 10px;
+}
+
+.upload-card > p {
+  color: #64748b;
+  margin-bottom: 24px;
+}
+
+.upload-area {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 55px 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+.upload-area p {
+  font-size: 17px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 10px;
+}
+
+.upload-area span {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.upload-area button,
+.primary-button {
+  border: none;
+  background: #2563eb;
+  color: white;
+  padding: 11px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.upload-area button:hover,
+.primary-button:hover {
+  background: #1d4ed8;
+}
+
+.transform-options-card label {
+  display: block;
+  font-weight: 600;
+  margin-top: 24px;
+}
+
+.transform-options-card select {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  font-size: 15px;
+}
+
+.primary-button {
+  margin-top: 24px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .transform-container {
+    grid-template-columns: 1fr;
+  }
+}
+.file-button {
+  display: inline-block;
+  background: #2563eb;
+  color: white;
+  padding: 11px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.file-button:hover {
+  background: #1d4ed8;
+}
+
+.file-button input {
+  display: none;
+}
+
+.upload-area span {
+  margin-bottom: 14px;
+}
